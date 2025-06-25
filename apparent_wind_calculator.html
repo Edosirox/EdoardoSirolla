@@ -49,6 +49,24 @@ const twSpeedInput = document.getElementById('twSpeed');
 
 let twa = 45; // degrees, from which the wind is blowing relative to bow
 let dragging = false;
+const shipImg = new Image();
+shipImg.crossOrigin = "anonymous";
+shipImg.src = "https://www.windtech-international.com/images/stories/Features/2025Features/JanFeb25Images/Vaisala-WASP-fig-5.jpg";
+const shipCanvas = document.createElement("canvas");
+const shipCtx = shipCanvas.getContext("2d");
+shipImg.onload = () => {
+    shipCanvas.width = shipImg.width;
+    shipCanvas.height = shipImg.height;
+    shipCtx.drawImage(shipImg, 0, 0);
+    const data = shipCtx.getImageData(0, 0, shipCanvas.width, shipCanvas.height);
+    for (let i = 0; i < data.data.length; i += 4) {
+        if (data.data[i] > 240 && data.data[i+1] > 240 && data.data[i+2] > 240) {
+            data.data[i+3] = 0;
+        }
+    }
+    shipCtx.putImageData(data, 0, 0);
+    draw();
+};
 
 canvas.addEventListener('mousedown', startDrag);
 canvas.addEventListener('mousemove', drag);
@@ -132,13 +150,11 @@ function drawArrow(fromX, fromY, angleDeg, length, color, label, value) {
 }
 
 function drawShip(x, y) {
-    ctx.fillStyle = '#555';
-    ctx.beginPath();
-    ctx.moveTo(x, y - 25); // bow
-    ctx.lineTo(x - 15, y + 25); // port stern
-    ctx.lineTo(x + 15, y + 25); // starboard stern
-    ctx.closePath();
-    ctx.fill();
+    if (!shipImg.complete) return;
+    const scale = 0.3;
+    const w = shipCanvas.width * scale;
+    const h = shipCanvas.height * scale;
+    ctx.drawImage(shipCanvas, x - w / 2, y - h / 2, w, h);
 }
 
 function draw() {
