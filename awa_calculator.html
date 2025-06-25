@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Apparent Wind Calculator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #87CEEB; /* sea blue */
+            text-align: center;
+            margin: 0;
+            padding: 0;
+        }
+        canvas {
+            background-color: #87CEEB;
+            border: 1px solid #000;
+            margin-top: 20px;
+        }
+        .controls {
+            margin-top: 10px;
+        }
+        input[type=range] {
+            width: 200px;
+        }
+    </style>
+</head>
+<body>
+    <h2>Apparent Wind Calculator</h2>
+    <div class="controls">
+        <label>Ship Speed: <span id="shipVal">0</span> kn</label><br>
+        <input type="range" id="shipSpeed" min="0" max="20" step="0.1" value="0"><br>
+        <label>True Wind Speed: <span id="twsVal">0</span> kn</label><br>
+        <input type="range" id="trueWindSpeed" min="0" max="30" step="0.1" value="0"><br>
+        <p>Click and drag on the canvas to set True Wind Angle</p>
+    </div>
+    <canvas id="windCanvas" width="500" height="500"></canvas>
+    <script>
+        const canvas = document.getElementById('windCanvas');
+        const ctx = canvas.getContext('2d');
+        const shipRange = document.getElementById('shipSpeed');
+        const twsRange = document.getElementById('trueWindSpeed');
+        const shipVal = document.getElementById('shipVal');
+        const twsVal = document.getElementById('twsVal');
+
+        let shipSpeed = parseFloat(shipRange.value);
+        let trueWindSpeed = parseFloat(twsRange.value);
+        let twa = 0; // degrees
+        let dragging = false;
+
+        shipRange.addEventListener('input', () => {
+            shipSpeed = parseFloat(shipRange.value);
+            shipVal.textContent = shipSpeed.toFixed(1);
+            draw();
+        });
+
+        twsRange.addEventListener('input', () => {
+            trueWindSpeed = parseFloat(twsRange.value);
+            twsVal.textContent = trueWindSpeed.toFixed(1);
+            draw();
+        });
+
+        canvas.addEventListener('mousedown', (e) => {
+            dragging = true;
+            setAngle(e);
+        });
+        canvas.addEventListener('mousemove', (e) => {
+            if (dragging) setAngle(e);
+        });
+        canvas.addEventListener('mouseup', () => dragging = false);
+        canvas.addEventListener('mouseleave', () => dragging = false);
+
+        function setAngle(e) {
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left - canvas.width/2;
+            const y = e.clientY - rect.top - canvas.height/2;
+            twa = Math.atan2(y, x) * 180 / Math.PI;
+            draw();
+        }
+
+        function drawShip(cx, cy) {
+            ctx.save();
+            ctx.translate(cx, cy);
+            ctx.fillStyle = 'gray';
+            ctx.beginPath();
+            ctx.moveTo(-15, 20);
+            ctx.lineTo(25, 0);
+            ctx.lineTo(-15, -20);
+            ctx.closePath();
+            ctx.fill();
+            ctx.restore();
+        }
+
+        function drawArrow(cx, cy, angle, length, color, label, offset=0) {
+            const rad = angle * Math.PI / 180;
+            const endX = cx + length * Math.cos(rad);
+            const endY = cy + length * Math.sin(rad);
+
+            ctx.save();
+            ctx.strokeStyle = color;
+            ctx.fillStyle = color;
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(cx, cy);
+            ctx.lineTo(endX, endY);
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.moveTo(endX, endY);
+            ctx.lineTo(endX - 10 * Math.cos(rad - Math.PI/6), endY - 10 * Math.sin(rad - Math.PI/6));
+            ctx.lineTo(endX - 10 * Math.cos(rad + Math.PI/6), endY - 10 * Math.sin(rad + Math.PI/6));
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.font = '14px Arial';
+            ctx.textAlign = 'left';
+            ctx.fillText(label, endX + 5, endY + offset);
+            ctx.restore();
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#87CEEB';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            const cx = canvas.width/2;
+            const cy = canvas.height/2;
+
+            drawShip(cx, cy);
+
+            const rad = twa * Math.PI/180;
+            const twx = trueWindSpeed * Math.cos(rad);
+            const twy = trueWindSpeed * Math.sin(rad);
+            const awx = twx - shipSpeed;
+            const awy = twy;
+            const aws = Math.sqrt(awx*awx + awy*awy);
+            let awa = Math.atan2(awy, awx) * 180/Math.PI;
+            if (awa < 0) awa += 360;
+
+            drawArrow(cx, cy, twa, 100, 'green', `TWA ${twa.toFixed(0)}\u00B0\nTWS ${trueWindSpeed.toFixed(1)} kn`, -10);
+            drawArrow(cx, cy, awa, 120, 'red', `AWA ${awa.toFixed(0)}\u00B0\nAWS ${aws.toFixed(1)} kn`, 10);
+
+            ctx.fillStyle = 'black';
+            ctx.font = '16px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText(`Ship Speed: ${shipSpeed.toFixed(1)} kn`, cx, cy + 60);
+        }
+
+        draw();
+    </script>
+</body>
+</html>
