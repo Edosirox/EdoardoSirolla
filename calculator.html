@@ -16,53 +16,107 @@
         .calculator {
             background: #fff;
             padding: 20px;
-            border-radius: 5px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-            text-align: center;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            width: 240px;
+        }
+        .display {
+            background: #222;
+            color: #0f0;
+            font-size: 1.4em;
+            padding: 10px;
+            border-radius: 4px;
+            text-align: right;
+            margin-bottom: 10px;
+            min-height: 32px;
+        }
+        .inputs {
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
         }
         input[type="number"] {
-            width: 80px;
+            width: 100px;
             padding: 5px;
-            margin: 5px;
+        }
+        .keypad {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 5px;
         }
         button {
-            padding: 5px 10px;
-            margin: 5px;
+            padding: 10px;
+            font-size: 1em;
+            border: none;
+            border-radius: 4px;
+            background: #e0e0e0;
+            cursor: pointer;
         }
-        #result {
-            margin-top: 10px;
-            font-size: 1.2em;
-            font-weight: bold;
+        button:hover {
+            background: #d5d5d5;
+        }
+        #result.animate {
+            animation: flash 0.5s;
+        }
+        @keyframes flash {
+            from { background-color: yellow; }
+            to { background-color: transparent; }
         }
     </style>
 </head>
 <body>
     <div class="calculator">
-        <input type="number" id="num1" placeholder="Number 1">
-        <input type="number" id="num2" placeholder="Number 2"><br>
-        <button onclick="calculate('+')">+</button>
-        <button onclick="calculate('-')">-</button>
-        <button onclick="calculate('*')">*</button>
-        <button onclick="calculate('/')">/</button>
-        <div id="result"></div>
+        <div class="display" id="result"></div>
+        <div class="inputs">
+            <input type="number" id="num1" placeholder="Number 1">
+            <input type="number" id="num2" placeholder="Number 2">
+        </div>
+        <div class="keypad">
+            <button onclick="calculate('+')">+</button>
+            <button onclick="calculate('-')">-</button>
+            <button onclick="calculate('*')">*</button>
+            <button onclick="calculate('/')">/</button>
+            <button onclick="calculate('^')">^</button>
+            <button onclick="calculate('sqrt')">√</button>
+            <button onclick="calculate('sin')">sin</button>
+            <button onclick="calculate('cos')">cos</button>
+        </div>
     </div>
 <script>
 function calculate(op) {
+    const resultDiv = document.getElementById('result');
     const n1 = parseFloat(document.getElementById('num1').value);
     const n2 = parseFloat(document.getElementById('num2').value);
-    if (isNaN(n1) || isNaN(n2)) {
-        document.getElementById('result').innerText = 'Please enter numbers';
-        return;
+    const binaryOps = ['+', '-', '*', '/', '^'];
+
+    if (binaryOps.includes(op)) {
+        if (isNaN(n1) || isNaN(n2)) {
+            resultDiv.innerText = 'Please enter numbers';
+            return;
+        }
+    } else {
+        if (isNaN(n1)) {
+            resultDiv.innerText = 'Please enter a number in the first field';
+            return;
+        }
     }
+
     let res;
     switch(op) {
         case '+': res = n1 + n2; break;
         case '-': res = n1 - n2; break;
         case '*': res = n1 * n2; break;
         case '/': res = n2 !== 0 ? n1 / n2 : 'Division by zero'; break;
+        case '^': res = Math.pow(n1, n2); break;
+        case 'sqrt': res = Math.sqrt(n1); break;
+        case 'sin': res = Math.sin(n1); break;
+        case 'cos': res = Math.cos(n1); break;
         default: res = 'Unknown operation';
     }
-    document.getElementById('result').innerText = 'Result: ' + res;
+    resultDiv.innerText = 'Result: ' + res;
+    resultDiv.classList.remove('animate');
+    void resultDiv.offsetWidth;
+    resultDiv.classList.add('animate');
 }
 </script>
 </body>
